@@ -6,7 +6,10 @@ import 'izitoast/dist/css/iziToast.min.css';
 const btnStart = document.querySelector('button[data-start]');
 const selectedDates = document.querySelector('input#datetime-picker');
 let userSelectedDate = null;
+let isActive = false;
+let intervalId;
 btnStart.disabled = true;
+let ms = null;
 
 const fp = flatpickr(selectedDates, {
   enableTime: true,
@@ -15,12 +18,8 @@ const fp = flatpickr(selectedDates, {
   defaultDate: new Date(),
   minuteIncrement: 1,
   onClose: function (selectedDates) {
-    userSelectedDate = new Date(selectedDates[0]);
     const timeAtStart = Date.now();
-    if (userSelectedDate > timeAtStart) {
-      btnStart.disabled = false;
-    } else {
-      btnStart.disabled = true;
+    if (selectedDates[0] < timeAtStart) {
       iziToast.error({
         message: 'Please choose a date in the future',
         position: 'topRight',
@@ -29,44 +28,37 @@ const fp = flatpickr(selectedDates, {
         closeOnClick: true,
         closeOnEscape: true,
       });
+    } else {
+      btnStart.disabled = false;
+      userSelectedDate = new Date(selectedDates).getTime(selectedDates);
     }
   },
 });
 
-class Timer {
-  constructor({ onTick }) {
-    this.onTick = onTick;
-    this.isActive = false;
-    this.intervalId = null;
-    this.userSelectedDate = userSelectedDate;
-  }
-  start() {
-    if (this.isActive) {
-      return;
-    }
-    this.isActive = true;
-    this.intervalId = setInterval(() => {
+function startTimer() {
+  if (!isActive) {
+    isActive = true;
+    intervalId = setInterval(() => {
       const currentTime = Date.now();
-      const ms = userSelectedDate - currentTime;
-      const time = convertMs(ms);
-      this.onTick(time);
+      ms = userSelectedDate - currentTime;
+      const { days, hours, minutes, seconds } = convertMs(ms);
+      updateTimerface({ days, hours, minutes, seconds });
+
+      if (ms < 1000) {
+        stop();
+      }
     }, 1000);
-  }
-  stop() {
-    if (this.ms < 1000) {
-      this.isActive = false;
-      clearInterval(this.intervalId);
-    }
   }
 }
 
-const timer = new Timer({
-  onTick: updateTimerface,
-});
+function stop() {
+  isActive = false;
+  clearInterval(intervalId);
+}
 
 btnStart.addEventListener('click', () => {
-  timer.start();
   btnStart.disabled = true;
+  startTimer();
 });
 
 function convertMs(ms) {
@@ -91,10 +83,8 @@ const minutesTimer = document.querySelector('[data-minutes]');
 const secondsTimer = document.querySelector('[data-seconds]');
 
 function updateTimerface({ days, hours, minutes, seconds }) {
-  daysTimer.textContent = `${days}`;
-  hoursTimer.textContent = `${hours}`;
-  minutesTimer.textContent = `${minutes}`;
-  secondsTimer.textContent = `${seconds}`;
+  daysTimer.textContent = days;
+  hoursTimer.textContent = hours;
+  minutesTimer.textContent = minutes;
+  secondsTimer.textContent = seconds;
 }
-
-
