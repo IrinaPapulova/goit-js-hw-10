@@ -1,4 +1,4 @@
-import iziToast from "izitoast";
+/*import iziToast from "izitoast";
 import "izitoast/dist/css/iziToast.min.css";
 
 let inputDelay = document.querySelector("input[delay]");
@@ -24,4 +24,4 @@ btnSubmit.addEventListener("submit", event){
             
           });
     }
-};
+};*/
